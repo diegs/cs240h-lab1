@@ -3,7 +3,6 @@ module Globber (matchGlob) where
 type GlobPattern = String
 
 type Glob = [GlobItem]
-
 data GlobItem = GLiteral Char
               | GAnyChar
               | GAnyString
@@ -11,13 +10,12 @@ data GlobItem = GLiteral Char
               deriving Show
 
 type MatchSet = [MatchItem]
-
 data MatchItem = MRange Char Char
                | MLiteral Char
                deriving Show
 
 matchGlob :: GlobPattern -> String -> Bool
-matchGlob pattern str = patternMatch (compilePattern pattern) str
+matchGlob pattern = patternMatch (compilePattern pattern)
 
 -- Pattern compilation routines.
 
@@ -51,11 +49,13 @@ makeMatchSet [] = []
 -- Matching routines.
 
 patternMatch :: Glob -> String -> Bool
-patternMatch (GAnyString:xs) (y:ys) =
-  (patternMatch xs (y:ys)) || (patternMatch (GAnyString:xs) ys) || (patternMatch xs ys)
+patternMatch (GAnyString:xs) ay@(_:ys) = patternMatch xs ay
+                                      || patternMatch (GAnyString:xs) ys
+                                      || patternMatch xs ys
 patternMatch (GAnyChar:xs) (_:ys) = patternMatch xs ys
 patternMatch (GLiteral x:xs) (y:ys) = (x == y) && patternMatch xs ys
 patternMatch (GSetMatch matchSet:xs) (y:ys) = setMatch matchSet y && patternMatch xs ys
+patternMatch [GAnyString] [] = True
 patternMatch [] [] = True
 patternMatch _ _ = False
 
